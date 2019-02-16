@@ -1,0 +1,71 @@
+// Plugins
+plugins {
+	id 'java'
+	id 'eclipse'
+	id 'idea'
+	id 'maven-publish'
+	id 'io.spring.dependency-management' version '1.0.6.RELEASE'
+	id 'com.jfrog.bintray' version '1.8.4'
+	id 'com.jfrog.artifactory' version '4.8.1'
+	id 'org.springframework.boot' version '2.0.6.RELEASE'
+}
+
+// Java Version
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+// Repositories
+repositories {
+	jcenter()
+	maven { url "https://dl.bintray.com/philippheuer/maven" }
+}
+
+// Dependency Management for Subprojects
+dependencyManagement {
+	dependencies {
+		// Logging
+		dependency group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+		dependency group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+
+		// Apache Commons
+		dependency group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+		dependency group: 'commons-io', name: 'commons-io', version: '2.6'
+
+		// Jackson
+		dependency group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.7'
+		dependency group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.7'
+
+		// Testing
+		dependency group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.3.1'
+		dependency group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.3.1'
+
+		// Lombok
+		dependency group: 'org.projectlombok', name: 'lombok', version: '1.18.2'
+	}
+}
+
+// In this section you declare the dependencies for your production and test code
+dependencies {
+	// Logging
+	compile group: 'org.slf4j', name: 'slf4j-api'
+	testCompile group: 'ch.qos.logback', name: 'logback-classic'
+
+	// Apache Commons
+	compile group: 'org.apache.commons', name: 'commons-lang3'
+	compile group: 'commons-io', name: 'commons-io'
+
+	// Test
+	testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api'
+	testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine'
+
+	// Getter & Setter
+	compileOnly group: 'org.projectlombok', name: 'lombok'
+	testCompile group: 'org.projectlombok', name: 'lombok'
+	annotationProcessor group: 'org.projectlombok', name: 'lombok'
+
+	// Spring Boot
+	compile group: 'org.springframework.boot', name: 'spring-boot-starter'
+
+	// Args4J
+	compile group: 'args4j', name: 'args4j', version: '2.33'
+}

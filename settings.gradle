@@ -1,0 +1,4 @@
+rootProject.name = 'job'
+rootProject.children.each {
+	it.name = rootProject.name + "-" + it.name
+}
