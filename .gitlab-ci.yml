@@ -43,6 +43,6 @@ Publish Container Image:
   stage: publish
   script:
   - cp build/libs/*.jar docker/rootfs/app.jar
-  - docker build -t $CI_REGISTRY_IMAGE/cli:$CI_COMMIT_REF_SLUG cli-deploy/docker
+  - docker build -t $CI_REGISTRY_IMAGE/cli:$CI_COMMIT_REF_SLUG docker
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG

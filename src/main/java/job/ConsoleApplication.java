@@ -1,12 +1,20 @@
 package job;
 
-import job.service.CLIArguments;
+import com.apptastic.rssreader.Item;
+import com.apptastic.rssreader.RssReader;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import job.domain.RSSConfig;
+import job.service.RSSDownloadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.env.Environment;
+
+import java.io.File;
+import java.util.stream.Stream;
 
 @SpringBootApplication
 @Slf4j
@@ -16,7 +24,7 @@ public class ConsoleApplication implements CommandLineRunner {
     private Environment env;
 
     @Autowired
-    private CLIArguments cliArguments;
+    private RSSDownloadService rssDownloadService;
 
     /**
      * App Entrypoint
@@ -35,9 +43,6 @@ public class ConsoleApplication implements CommandLineRunner {
     @Override
     public void run(String... args) {
         // CLI
-        // - Parse Arguments
-        cliArguments.parseArguments(args);
-        // - Call Implementation
-        // - call your own code here and use the parsed arguments
+        rssDownloadService.downloadNewFiles();
     }
 }

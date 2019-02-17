@@ -2,3 +2,9 @@
 logging:
   level:
     root: WARN
+    job: DEBUG
+
+# Configuration Path
+path:
+  config: .
+  data: S:\Cache\torrents

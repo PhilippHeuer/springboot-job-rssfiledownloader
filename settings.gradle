@@ -1,4 +1,4 @@
-rootProject.name = 'job'
+rootProject.name = 'springboot-job'
 rootProject.children.each {
 	it.name = rootProject.name + "-" + it.name
 }
