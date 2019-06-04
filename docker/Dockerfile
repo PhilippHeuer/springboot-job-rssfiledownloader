@@ -3,7 +3,7 @@
 ############################################################
 
 # Set the base image
-FROM adoptopenjdk/openjdk11:jdk-11.28-alpine
+FROM openjdk:11-jdk-stretch
 
 ############################################################
 # Installation
@@ -11,9 +11,6 @@ FROM adoptopenjdk/openjdk11:jdk-11.28-alpine
 
 # Files
 COPY rootfs /
-
-# Setup
-RUN apk add --no-cache bash git
 
 ############################################################
 # Execution
