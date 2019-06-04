@@ -3,7 +3,7 @@
 ####
 
 # Image
-image: openjdk:8-jdk-alpine
+image: adoptopenjdk/openjdk11:jdk-11.28-alpine
 
 services:
 - docker:dind
