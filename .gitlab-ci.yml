@@ -21,6 +21,10 @@ stages:
 - test
 - publish
 
+# Before Script
+before_script:
+- chmod +x gradlew
+
 # Build
 Assemble:
   stage: build
