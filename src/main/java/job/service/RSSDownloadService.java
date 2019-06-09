@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import job.domain.RSSConfig;
 import job.domain.RSSFeedRule;
+import job.domain.RSSStateFile;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,11 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileFilter;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -46,11 +50,15 @@ public class RSSDownloadService {
 
             // parse config
             RSSConfig config = mapper.readValue(new File(configPath + File.separator + "config.yaml"), RSSConfig.class);
-            log.debug(config.toString());
+
+            // parse state
+            RSSStateFile currentState = new RSSStateFile(0L);
+            if (Files.exists(new File(torrentFilePath + File.separator + "state.yaml").toPath())) {
+                currentState = mapper.readValue(new File(torrentFilePath + File.separator + "state.yaml"), RSSStateFile.class);
+            }
 
             // get last modified file
-            Long lastTorrentFileModified = lastFileModified(torrentFilePath) == null ? 0l : lastFileModified(torrentFilePath).lastModified();
-            Date latestTorrentFileDate = new Date(lastTorrentFileModified);
+            Date latestTorrentFileDate = new Date(currentState.getLastCheckedAt());
             log.info("Fetching all new torrent files after: " + latestTorrentFileDate.toString());
 
             // for each feed
@@ -94,6 +102,13 @@ public class RSSDownloadService {
                     ex.printStackTrace();
                 }
             });
+
+            // get last modified file
+            Long lastTorrentFileModified = lastFileModified(torrentFilePath) == null ? 0l : lastFileModified(torrentFilePath).lastModified();
+
+            // save last state
+            currentState.setLastCheckedAt(lastTorrentFileModified);
+            mapper.writeValue(new File(torrentFilePath + File.separator + "state.yaml"), currentState);
 
         } catch (Exception e) {
             e.printStackTrace();
