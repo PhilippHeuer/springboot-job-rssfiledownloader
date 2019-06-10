@@ -73,7 +73,9 @@ public class RSSDownloadService {
                         // skip if it's not a new torrent
                         DateFormat df = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
                         Date currentTorrentDate =  df.parse(item.getPubDate().get());
+
                         if (currentTorrentDate.before(latestTorrentFileDate)) {
+                            log.debug(currentTorrentDate + ": " + item.getTitle().get() + " -> Skipped since it was already loaded!");
                             continue;
                         }
 
@@ -94,7 +96,7 @@ public class RSSDownloadService {
                             log.info(currentTorrentDate + ": " + item.getTitle().get() + " -> " + item.getLink().get());
                             FileUtils.copyURLToFile(new URL(item.getLink().get()), new File(torrentFilePath + File.separator + item.getTitle().get() + ".torrent"), 5000, 5000);
                         } else {
-                            log.debug(currentTorrentDate + ": " + item.getTitle().get() + " -> Skipped.");
+                            log.debug(currentTorrentDate + ": " + item.getTitle().get() + " -> Skipped since no filter matches!");
                         }
 
                     }
@@ -103,34 +105,13 @@ public class RSSDownloadService {
                 }
             });
 
-            // get last modified file
-            Long lastTorrentFileModified = lastFileModified(torrentFilePath) == null ? 0l : lastFileModified(torrentFilePath).lastModified();
-
             // save last state
-            currentState.setLastCheckedAt(lastTorrentFileModified);
+            currentState.setLastCheckedAt(new Date().getTime());
             mapper.writeValue(new File(torrentFilePath + File.separator + "state.yaml"), currentState);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static File lastFileModified(String dir) {
-        File fl = new File(dir);
-        File[] files = fl.listFiles(new FileFilter() {
-            public boolean accept(File file) {
-                return file.isFile();
-            }
-        });
-        long lastMod = Long.MIN_VALUE;
-        File choice = null;
-        for (File file : files) {
-            if (file.lastModified() > lastMod) {
-                choice = file;
-                lastMod = file.lastModified();
-            }
-        }
-        return choice;
     }
 
 }
