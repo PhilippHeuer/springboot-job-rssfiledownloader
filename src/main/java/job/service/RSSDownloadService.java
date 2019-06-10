@@ -14,16 +14,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Locale;
-import java.util.regex.Pattern;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,6 +33,12 @@ public class RSSDownloadService {
 
     // ObjectMapper
     private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+
+    public RSSDownloadService() {
+        // register modules
+        mapper.findAndRegisterModules();
+        mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+    }
 
     /**
      * Download new Files
@@ -52,61 +55,86 @@ public class RSSDownloadService {
             RSSConfig config = mapper.readValue(new File(configPath + File.separator + "config.yaml"), RSSConfig.class);
 
             // parse state
-            RSSStateFile currentState = new RSSStateFile(0L);
+            final RSSStateFile currentState;
             if (Files.exists(new File(torrentFilePath + File.separator + "state.yaml").toPath())) {
                 currentState = mapper.readValue(new File(torrentFilePath + File.separator + "state.yaml"), RSSStateFile.class);
+            } else {
+                currentState = new RSSStateFile();
             }
-
-            // get last modified file
-            Date latestTorrentFileDate = new Date(currentState.getLastCheckedAt());
-            log.info("Fetching all new torrent files after: " + latestTorrentFileDate.toString());
 
             // for each feed
             config.getFeeds().forEach(feed -> {
+                // DateFormat df = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
+
+                // get last modified file
+                LocalDateTime feedLastChecked = currentState.getLastCheckedAtForFeed(feed.getName());
+                log.info("Fetching all new torrent files after: " + feedLastChecked);
+
                 try {
                     // parse feed
                     RssReader reader = new RssReader();
-                    Stream<Item> rssFeed = reader.read(feed.getUrl());
+                    List<Item> rssFeed = reader.read(feed.getUrl()).collect(Collectors.toList());
 
                     // for each item
-                    for(Item item : rssFeed.collect(Collectors.toList())) {
+                    for(Item item : rssFeed) {
                         // skip if it's not a new torrent
-                        DateFormat df = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
-                        Date currentTorrentDate =  df.parse(item.getPubDate().get());
+                        LocalDateTime currentTorrentDate =  LocalDateTime.parse(item.getPubDate().get(), formatter);
 
-                        if (currentTorrentDate.before(latestTorrentFileDate)) {
+                        if (currentTorrentDate.compareTo(feedLastChecked) > 0) {
                             log.debug(currentTorrentDate + ": " + item.getTitle().get() + " -> Skipped since it was already loaded!");
                             continue;
                         }
 
                         // regex filter rules
-                        Boolean matchesFilter = false;
+                        Integer matchesFilter = 0;
                         for (RSSFeedRule rule : feed.getRules()) {
                             if (rule.getType().equalsIgnoreCase("regex")) {
                                 log.debug("Checking regex rule [{}] for match in [{}]", rule.getValue(), item.getTitle().get());
 
                                 if (item.getTitle().get().matches(rule.getValue())) {
-                                    matchesFilter = true;
+                                    matchesFilter++;
+                                }
+                            }
+                        }
+
+                        // exclude filters
+                        Integer matchesExclude = 0;
+                        for (RSSFeedRule rule : feed.getExclude()) {
+                            if (rule.getType().equalsIgnoreCase("regex")) {
+                                log.debug("Checking regex rule [{}] for match in [{}]", rule.getValue(), item.getTitle().get());
+
+                                if (item.getTitle().get().matches(rule.getValue())) {
+                                    matchesExclude++;
                                 }
                             }
                         }
 
                         // download torrent file
-                        if (matchesFilter) {
+                        if (matchesFilter > 0 && matchesExclude == 0) {
                             log.info(currentTorrentDate + ": " + item.getTitle().get() + " -> " + item.getLink().get());
                             FileUtils.copyURLToFile(new URL(item.getLink().get()), new File(torrentFilePath + File.separator + item.getTitle().get() + ".torrent"), 5000, 5000);
+                        } else if (matchesExclude > 0) {
+                            log.debug(currentTorrentDate + ": " + item.getTitle().get() + " -> Skipped because it matches a exclusion filter rule!");
                         } else {
                             log.debug(currentTorrentDate + ": " + item.getTitle().get() + " -> Skipped since no filter matches!");
                         }
-
                     }
+
+                    // store latest entry for this feed
+                    LocalDateTime mostRecentItem = rssFeed
+                        .stream()
+                        .map(i -> LocalDateTime.parse(i.getPubDate().get(), formatter))
+                        .sorted(Comparator.reverseOrder())
+                        .findFirst()
+                        .get();
+                    currentState.getLastCheckedFeedAt().put(feed.getName(), mostRecentItem);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             });
 
             // save last state
-            currentState.setLastCheckedAt(new Date().getTime());
             mapper.writeValue(new File(torrentFilePath + File.separator + "state.yaml"), currentState);
 
         } catch (Exception e) {

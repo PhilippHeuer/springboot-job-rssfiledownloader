@@ -11,8 +11,12 @@ import java.util.List;
 @Data
 public class RSSFeed {
 
+    private String name;
+
     private String url;
 
     private List<RSSFeedRule> rules;
+
+    private List<RSSFeedRule> exclude;
 
 }
