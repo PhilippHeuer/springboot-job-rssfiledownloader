@@ -81,7 +81,7 @@ public class RSSDownloadService {
                         // skip if it's not a new torrent
                         LocalDateTime currentTorrentDate =  LocalDateTime.parse(item.getPubDate().get(), formatter);
 
-                        if (currentTorrentDate.compareTo(feedLastChecked) > 0) {
+                        if (currentTorrentDate.compareTo(feedLastChecked) < 0) {
                             log.debug(currentTorrentDate + ": " + item.getTitle().get() + " -> Skipped since it was already loaded!");
                             continue;
                         }
