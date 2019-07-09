@@ -51,4 +51,4 @@ Docker Container - AMD64:
   artifacts:
     paths:
     - build/libs
-  expire_in: 1 week
+    expire_in: 1 week
