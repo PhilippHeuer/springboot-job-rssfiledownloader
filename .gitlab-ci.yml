@@ -18,39 +18,40 @@ variables:
 # Stages
 stages:
 - build
+- deploy
 
 # Before Script
 before_script:
 - chmod +x gradlew
 
 # Build
-Docker Container - ARMv7:
-  image: docker.io/arm32v7/openjdk:11-jdk-stretch
+Assemble:
   stage: build
   script:
   - ./gradlew assemble
-  - cp build/libs/*.jar docker/rootfs/app.jar
-  - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-armv7 docker --file Dockerfile.armv7
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-armv7
-  tags:
-  - armhf
   artifacts:
     paths:
     - build/libs
     expire_in: 1 week
 
 # Build
-Docker Container - AMD64:
-  image: openjdk:11-jdk-stretch
-  stage: build
+Docker Container - ARMHF:
+  image: docker:stable
+  stage: deploy
+  tags:
+  - armhf
   script:
-  - ./gradlew assemble
+  - cp build/libs/*.jar docker/rootfs/app.jar
+  - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG docker --file Dockerfile.armhf
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
+# Build
+Docker Container - AMD64:
+  image: docker:stable
+  stage: deploy
+  script:
   - cp build/libs/*.jar docker/rootfs/app.jar
   - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG docker --file Dockerfile.amd64
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  artifacts:
-    paths:
-    - build/libs
-    expire_in: 1 week
