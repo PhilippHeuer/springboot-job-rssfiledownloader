@@ -50,5 +50,5 @@ Docker Container - AMD64:
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   artifacts:
     paths:
-	- build/libs
+    - build/libs
   expire_in: 1 week
