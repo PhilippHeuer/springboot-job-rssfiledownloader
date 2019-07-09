@@ -49,6 +49,6 @@ Docker Container - AMD64:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   artifacts:
-	paths:
+    paths:
 	- build/libs
   expire_in: 1 week
